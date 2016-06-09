@@ -111,6 +111,9 @@ pubmed <- function(start_year = 2014,
           unlist(lapply(get(paste0(i, '_authors')), function(x){x['Initials']}))
       }
       
+      # Add the year
+      pubmed_data$year <- years[year]
+      
       # Add results to results_list
       results_list[[year]] <- pubmed_data
       
