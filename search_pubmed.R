@@ -136,156 +136,156 @@ pubmed <- function(start_year = 2014,
   return(return_object)
 }
 
-# Use pubmed to get results for malaria eradication
-malaria_eradication <- 
-  pubmed(start_year = 1945,
-         end_year = 2015,
-         search_topic = paste0('(malaria[Title/Abstract])', 
-                               'AND (elimination OR eradication)'))
-
-# Use pubmed to get results for malaria more generally
-malaria <- 
-  pubmed(start_year = 1945,
-         end_year = 2015,
-         search_topic = paste0('(malaria[Title/Abstract])'))
-
-# Horizontally bind
-combined <- 
-  left_join(malaria_eradication %>%
-          rename(eradication = n),
-        malaria %>%
-          rename(malaria = n),
-        by = 'year') %>%
-  mutate(p = eradication / malaria * 100)
-
-# Rename to make more clear
-combined <- 
-  combined %>%
-  rename(`Mentions eradication or elmination` = eradication,
-         `General malaria` = malaria)
-
-# Gather to make long
-combined <- gather(combined, 
-                   key, 
-                   value, `Mentions eradication or elmination`:p)
-
-# Visualize
-ggplot(data = combined %>%
-         filter(key != 'p'),
-       aes(x = year,
-           y = value,
-           group = key,
-           fill = key)) +
-  geom_area() +
-  xlab('Year') +
-  ylab('Publications') +
-  scale_fill_manual(values = c('darkgrey', 'red'),
-                    name = '') +
-  theme_bw() +
-  ggtitle(expression(atop('Papers containing "malaria" in title/abstract: 1945-present', 
-                          atop(italic("Retrieved from PubMed"), "")))) +
-  theme(legend.position = 'bottom')
-ggsave('pubmed.pdf')
-
-ggplot(data = combined %>%
-         filter(key == 'p'),
-       aes(x = year, 
-           y = value)) +
-  geom_area(alpha = 0.6,
-            color = 'black') +
-  xlab('Year') +
-  ylab('Percentage') +
-  theme_bw() +
-  ggtitle(expression(atop('Papers containing "eradication" or "elimination"', 
-                          atop(italic('As % of all "malaria" papers, searching title/abstract only, retrieved from PubMed'), ""))))
-ggsave('pubmed2.pdf')
-
-# NTDs
-
-ntds <- 
-  pubmed(start_year = 1990,
-         end_year = 2015,
-         search_topic = paste0('(onchocerciasis[Title/Abstract])',
-                               ' OR (leishmaniasis[Title/Abstract])',
-                               ' OR (human african trypanosomiasis[Title/Abstract])',
-                               ' OR (lymphatic filariasis[Title/Abstract])',
-                               ' OR (chagas[Title/Abstract])',
-                               ' OR (schistosomiasis[Title/Abstract])',
-                               ' OR (oncocerchiasis[Title/Abstract])'))
-
-ntds_eradication <- 
-  pubmed(start_year = 1990,
-         end_year = 2015,
-         search_topic = paste0('(onchocerciasis[Title/Abstract])',
-                               ' OR (leishmaniasis[Title/Abstract])',
-                               ' OR (human african trypanosomiasis[Title/Abstract])',
-                               ' OR (lymphatic filariasis[Title/Abstract])',
-                               ' OR (chagas[Title/Abstract])',
-                               ' OR (schistosomiasis[Title/Abstract])',
-                               ' OR (oncocerchiasis[Title/Abstract])', 
-                               ' (AND (public-private partnership)',
-                               ' OR (ppp)',
-                               ' OR (pdp)',
-                               ' OR (public private))'))
-
-
-# Horizontally bind
-combined <- 
-  left_join(ntds_eradication %>%
-              rename(eradication = n),
-            ntds %>%
-              rename(ntds = n),
-            by = 'year') %>%
-  mutate(p = eradication / ntds * 100)
-
-# Rename to make more clear
-combined <- 
-  combined %>%
-  rename(`Mentions eradication or elmination` = eradication,
-         `General NTDs` = ntds)
-
-# Gather to make long
-combined <- gather(combined, 
-                   key, 
-                   value, `Mentions eradication or elmination`:p)
-
-# Visualize
-g1 <- ggplot(data = combined %>%
-         filter(key != 'p'),
-       aes(x = year,
-           y = value,
-           group = key,
-           fill = key)) +
-  geom_area() +
-  xlab('Year') +
-  ylab('Publications') +
-  scale_fill_manual(values = c('darkgrey', 'red'),
-                    name = '') +
-  theme_bw() +
-  ggtitle(expression(atop('Papers containing NTDs in title/abstract: 1990-present', 
-                          atop(italic("Retrieved from PubMed"), "")))) +
-  theme(legend.position = 'bottom')
-ggsave('')
-
-g2 <- ggplot(data = combined %>%
-         filter(key == 'p'),
-       aes(x = year, 
-           y = value)) +
-  geom_area(alpha = 0.6,
-            color = 'black') +
-  xlab('Year') +
-  ylab('Percentage') +
-  theme_bw() +
-  ggtitle(expression(atop('Papers mentioning PPP in abstract', 
-                          atop(italic('As % of all NTDs papers, searching title/abstract only, retrieved from PubMed'), ""))))
-
-source('multiplot.R')
-multiplot(g1, g2)
-
-# example for celine
-
-x <- 
-  pubmed(start_year = 2015,
-         end_year = 2015,
-         search_topic = paste0('(ntds[Title/Abstract])'),
-         counts_only = FALSE)
+# # Use pubmed to get results for malaria eradication
+# malaria_eradication <- 
+#   pubmed(start_year = 1945,
+#          end_year = 2015,
+#          search_topic = paste0('(malaria[Title/Abstract])', 
+#                                'AND (elimination OR eradication)'))
+# 
+# # Use pubmed to get results for malaria more generally
+# malaria <- 
+#   pubmed(start_year = 1945,
+#          end_year = 2015,
+#          search_topic = paste0('(malaria[Title/Abstract])'))
+# 
+# # Horizontally bind
+# combined <- 
+#   left_join(malaria_eradication %>%
+#           rename(eradication = n),
+#         malaria %>%
+#           rename(malaria = n),
+#         by = 'year') %>%
+#   mutate(p = eradication / malaria * 100)
+# 
+# # Rename to make more clear
+# combined <- 
+#   combined %>%
+#   rename(`Mentions eradication or elmination` = eradication,
+#          `General malaria` = malaria)
+# 
+# # Gather to make long
+# combined <- gather(combined, 
+#                    key, 
+#                    value, `Mentions eradication or elmination`:p)
+# 
+# # Visualize
+# ggplot(data = combined %>%
+#          filter(key != 'p'),
+#        aes(x = year,
+#            y = value,
+#            group = key,
+#            fill = key)) +
+#   geom_area() +
+#   xlab('Year') +
+#   ylab('Publications') +
+#   scale_fill_manual(values = c('darkgrey', 'red'),
+#                     name = '') +
+#   theme_bw() +
+#   ggtitle(expression(atop('Papers containing "malaria" in title/abstract: 1945-present', 
+#                           atop(italic("Retrieved from PubMed"), "")))) +
+#   theme(legend.position = 'bottom')
+# ggsave('pubmed.pdf')
+# 
+# ggplot(data = combined %>%
+#          filter(key == 'p'),
+#        aes(x = year, 
+#            y = value)) +
+#   geom_area(alpha = 0.6,
+#             color = 'black') +
+#   xlab('Year') +
+#   ylab('Percentage') +
+#   theme_bw() +
+#   ggtitle(expression(atop('Papers containing "eradication" or "elimination"', 
+#                           atop(italic('As % of all "malaria" papers, searching title/abstract only, retrieved from PubMed'), ""))))
+# ggsave('pubmed2.pdf')
+# 
+# # NTDs
+# 
+# ntds <- 
+#   pubmed(start_year = 1990,
+#          end_year = 2015,
+#          search_topic = paste0('(onchocerciasis[Title/Abstract])',
+#                                ' OR (leishmaniasis[Title/Abstract])',
+#                                ' OR (human african trypanosomiasis[Title/Abstract])',
+#                                ' OR (lymphatic filariasis[Title/Abstract])',
+#                                ' OR (chagas[Title/Abstract])',
+#                                ' OR (schistosomiasis[Title/Abstract])',
+#                                ' OR (oncocerchiasis[Title/Abstract])'))
+# 
+# ntds_eradication <- 
+#   pubmed(start_year = 1990,
+#          end_year = 2015,
+#          search_topic = paste0('(onchocerciasis[Title/Abstract])',
+#                                ' OR (leishmaniasis[Title/Abstract])',
+#                                ' OR (human african trypanosomiasis[Title/Abstract])',
+#                                ' OR (lymphatic filariasis[Title/Abstract])',
+#                                ' OR (chagas[Title/Abstract])',
+#                                ' OR (schistosomiasis[Title/Abstract])',
+#                                ' OR (oncocerchiasis[Title/Abstract])', 
+#                                ' (AND (public-private partnership)',
+#                                ' OR (ppp)',
+#                                ' OR (pdp)',
+#                                ' OR (public private))'))
+# 
+# 
+# # Horizontally bind
+# combined <- 
+#   left_join(ntds_eradication %>%
+#               rename(eradication = n),
+#             ntds %>%
+#               rename(ntds = n),
+#             by = 'year') %>%
+#   mutate(p = eradication / ntds * 100)
+# 
+# # Rename to make more clear
+# combined <- 
+#   combined %>%
+#   rename(`Mentions eradication or elmination` = eradication,
+#          `General NTDs` = ntds)
+# 
+# # Gather to make long
+# combined <- gather(combined, 
+#                    key, 
+#                    value, `Mentions eradication or elmination`:p)
+# 
+# # Visualize
+# g1 <- ggplot(data = combined %>%
+#          filter(key != 'p'),
+#        aes(x = year,
+#            y = value,
+#            group = key,
+#            fill = key)) +
+#   geom_area() +
+#   xlab('Year') +
+#   ylab('Publications') +
+#   scale_fill_manual(values = c('darkgrey', 'red'),
+#                     name = '') +
+#   theme_bw() +
+#   ggtitle(expression(atop('Papers containing NTDs in title/abstract: 1990-present', 
+#                           atop(italic("Retrieved from PubMed"), "")))) +
+#   theme(legend.position = 'bottom')
+# ggsave('')
+# 
+# g2 <- ggplot(data = combined %>%
+#          filter(key == 'p'),
+#        aes(x = year, 
+#            y = value)) +
+#   geom_area(alpha = 0.6,
+#             color = 'black') +
+#   xlab('Year') +
+#   ylab('Percentage') +
+#   theme_bw() +
+#   ggtitle(expression(atop('Papers mentioning PPP in abstract', 
+#                           atop(italic('As % of all NTDs papers, searching title/abstract only, retrieved from PubMed'), ""))))
+# 
+# source('multiplot.R')
+# multiplot(g1, g2)
+# 
+# # example for celine
+# 
+# x <- 
+#   pubmed(start_year = 2015,
+#          end_year = 2015,
+#          search_topic = paste0('(ntds[Title/Abstract])'),
+#          counts_only = FALSE)
