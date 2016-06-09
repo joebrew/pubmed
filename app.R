@@ -3,17 +3,21 @@ library(ggplot2)
 # UI #####################################################
 ui <- fluidPage(
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(    titlePanel(title = 'Systematic review helper'),
       textInput('term', 'Search term', value = 'Centro de investigação em Saude de Manhiça'),
       # checkboxInput('abstract', label = 'Only in abstract',
                     # value = TRUE),
       sliderInput('years', 'Years',
                   min = 2000, max = 2016, value = c(2015, 2016),
-                  sep = ''),
-      sliderInput("obs", "Number of observations:", min = 10, max = 500, value = 100)
+                  sep = '')
     ),
-    mainPanel(plotOutput("simple_plot"),
+    mainPanel(    titlePanel(title = 'Results'),
+                  p('Wait a few seconds while we fetch your data'), 
+              h2(textOutput("status_text")),
+              br(),
               downloadButton('downloadData', 'Download'),
+              br(),
+              hr(),
               dataTableOutput('results_table'))
   )
 )
@@ -51,8 +55,14 @@ server <- function(input, output) {
   )
 
   
-  output$simple_plot <- renderPlot({
-    ggplot()
+  output$status_text <- renderText({
+    x <- results()
+    if(is.null(x)){
+      'Preparing your data'
+    } else {
+      'Your data is ready for download'
+    }
+    
   })
 }
 
