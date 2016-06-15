@@ -1,0 +1,306 @@
+---
+title: Publicaçoes do CISM
+author: Inacio Mandomando and Joe Brew
+params:
+  search_again: false
+  start_year: 1995
+  end_year: 2016
+  search_topic: ! '(CISM) OR (Centro de Investigação em Saude de Manhiça) OR (Manhiça Health Research Center) OR (Fundação Manhiça)'
+fig_height: 2.6
+fig_width: 4
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+---
+
+
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = F}
+# No scientific notation
+options(scipen=999)
+
+# Packages
+library(xtable)
+library(knitr)
+library(Hmisc)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+# Basic knitr options
+opts_chunk$set(comment = NA, 
+               echo = FALSE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = FALSE, 
+               cache = FALSE)
+
+# Specify paramaters
+for (i in 1:length(params)){
+  assign(names(params)[i],
+         params[[i]],
+         env = .GlobalEnv)
+}
+
+# Get the function for searching pubmed
+source('search_pubmed.R')
+# Get theme for ggplots
+source('theme.R')
+# Get function for extracting the area
+source('get_area.R')
+```
+
+```{r}
+# Perform search
+file_name <- paste0('stored_results_', 
+                    start_year, 
+                    '_', 
+                    end_year,
+                    '.RData')
+if(search_again | !file_name %in% dir()){
+  results <- pubmed(start_year = start_year,
+                end_year = end_year,
+                search_topic = search_topic,
+                counts_only = FALSE)
+  save(results,
+       file = file_name)
+} else {
+  load(file_name)
+}
+
+results <- left_join(results$results,
+                     results$abstracts,
+                     by = 'id')
+```
+
+# Introdução
+
+Este relatório resume a produção científica do Centro de Investigação em Saude de Manhiça. E produzido de forma automatica, através de pesquisas sistemáticas de PubMed. O termo de pesquisa foi:
+
+**Termo de pesquisa**:
+
+```{r}
+cat(search_topic)
+```
+
+# Através do tempo
+
+
+## Por ano
+
+```{r}
+# Group by year and get count
+by_year <- 
+  results %>%
+  group_by(year) %>%
+  tally
+
+# Plot
+g <- 
+  ggplot(data = by_year,
+       aes(x = year, 
+           y = n)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_cism() +
+  labs(title = 'Publicaçoes por ano') +
+  xlab('Ano') +
+  ylab('Publicaçoes')
+ggplotly(g)
+```
+
+## Por cuarto
+
+```{r}
+by_quarter <-
+  results %>%
+  mutate(quarter = ifelse(between(month, 1, 3), 1,
+                          ifelse(between(month, 4, 6), 2,
+                                 ifelse(between(month, 7, 9), 3,
+                                       ifelse(between(month, 10, 12), 4, NA))))) %>%
+  mutate(year_quarter = paste0(year, ' Q', quarter)) %>%
+  group_by(year_quarter) %>%
+  tally
+
+# Keep only last 20 quarters (five years)
+if(nrow(by_quarter) > 20){
+  by_quarter <- by_quarter[(nrow(by_quarter) - 20): nrow(by_quarter) ,]
+}
+
+g <- ggplot(data = by_quarter,
+       aes(x = year_quarter,
+           y = n)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkgreen',
+           alpha = 0.6) +
+  labs(title = 'Publicaçoes por cuarto',
+       subtitle = 'Somente nos últimos cinco anos') +
+  xlab('Cuarto') +
+  ylab('Publicaçoes') +
+  theme_cism() +
+    theme(axis.text.x = element_text(angle = 90)) 
+ggplotly(g)
+```
+
+# Por pessoa
+
+## Total 
+
+O siguente gráfico soumente conta a uma pessoa se ele e o primeiro o último autor no artigo, e contém os 20 autores mais produtiveis.
+
+```{r}
+first_author <- 
+  results %>%
+  group_by(author = `first _author_last_name`) %>% 
+  tally
+
+last_author <-
+    results %>%
+  group_by(author = `last _author_last_name`) %>% 
+  tally
+
+# combine
+authors <- rbind(first_author, last_author)
+
+# Group
+by_author <- 
+  authors %>%
+  group_by(author) %>%
+  summarise(n = sum(n)) %>%
+  ungroup %>%
+  arrange(desc(n))
+
+# Keep only top 20
+by_author <- 
+  by_author[1:20,]
+
+# Relevel factor in order
+by_author$author <- factor(by_author$author, levels = by_author$author)
+
+# Plot
+g <- 
+  ggplot(data = by_author,
+         aes(x = author,
+             y = n)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_cism() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  xlab('') +
+  ylab('Publicaçoes') +
+  labs(title = 'Publicaçoes totais',
+       subtitle = 'Primeiro o último autor')
+
+ggplotly(g)
+```
+
+## Por ano
+
+No siguiente gráfico soumente contém os autores que têm 5 o mais publicaçoes.
+
+```{r}
+first_author <- 
+  results %>%
+  group_by(author = `first _author_last_name`, year) %>% 
+  tally
+
+last_author <-
+    results %>%
+  group_by(author = `last _author_last_name`, year) %>% 
+  tally
+
+# combine
+authors <- rbind(first_author, last_author)
+
+# Group
+by_author_year <- 
+  authors %>%
+  group_by(author, year) %>%
+  summarise(n = sum(n)) %>%
+  ungroup 
+
+# Keep only those with 5 or more publications
+by_author_year <-
+  by_author_year %>%
+  group_by(author) %>%
+  mutate(total = sum(n)) %>%
+  ungroup %>%
+  filter(total >= 5)
+
+cols <- colorRampPalette(brewer.pal(9, 'Spectral'))(length(unique(by_author_year$author)))
+# Plot
+g <- 
+  ggplot(data = by_author_year,
+         aes(x = year, 
+             y = n,
+             group = author,
+             color = author)) +
+  geom_line() +
+  geom_point() +
+  theme_cism() +
+  labs(title = 'Publicaçoes por ano e autor',
+       subtitle = 'Primeiros e últimos soumente') +
+        guides(fill=guide_legend(ncol=10)) +
+    theme(legend.position="bottom", 
+          legend.direction = 'horizontal')  +
+  # scale_color_discrete("") +
+  xlab('Ano') +
+  ylab('Publicaçoes') +
+  scale_color_manual(name = '', values = cols)
+
+print(g)
+```
+
+# Por área
+
+```{r}
+# Get the area of every paper
+results$hiv <- results$tuberculosis <- results$malaria <- NA
+
+for (i in 1:nrow(results)){
+  results$hiv[i] <- get_area(abstract = results$abstract[i], classify = 'hiv')
+  results$tuberculosis[i] <- get_area(abstract = results$abstract[i], classify = 'tuberculosis')
+  results$malaria[i] <- get_area(abstract = results$abstract[i], classify = 'malaria')
+}
+
+# Group by area and plot
+by_area <- 
+  results %>%
+  group_by(year) %>%
+  summarise(hiv = length(which(hiv)),
+            tb = length(which(tuberculosis)),
+            malaria = length(which(malaria)))
+
+# Gather
+by_area_gathered <- 
+  gather(by_area, key, value, hiv:malaria)
+
+# cols <- colorRampPalette(brewer.pal(8, 'Set1'))(length(unique(by_area_gathered$key)))
+cols <- c('darkgreen', 'darkorange', 'blue')
+# Plot
+g <- 
+  ggplot(data = by_area_gathered,
+         aes(x = year, y = value, 
+             group = key,
+             color = key)) +
+  geom_line() +
+  # geom_bar(stat = 'identity', position = 'dodge') +
+  scale_color_manual(name = 'Area', values = cols) +
+  theme_cism() +
+  xlab('Ano') +
+  ylab('Publicações') +
+  labs(title = 'Publicações por área',
+       subtitle = '(estimações)')
+ggplotly(g)
+```
+
+# Tabelas
+
+## Por anno
+
+Bla bla bla.

@@ -81,8 +81,13 @@ pubmed <- function(start_year = 2014,
                    'language' = Language(records),
                    'country' = Country(records),
                    'id' = ArticleId(records),
-                   'year' = years[year])
-      
+                   'year' = years[year],
+                   'month' = MonthPubmed(records),
+                   'day' = DayPubmed(records),
+                   'affiliation' = Affiliation(records))
+      # Cited(records)
+      # RefSource(records)
+
       # Create separate dataframe for abstracts
       abstracts <- data.frame('id' = ArticleId(records),
                               'abstract' = AbstractText(records))
@@ -110,6 +115,14 @@ pubmed <- function(start_year = 2014,
         pubmed_data[,paste(i, '_author_initials')] <- 
           unlist(lapply(get(paste0(i, '_authors')), function(x){x['Initials']}))
       }
+      
+      # All authors
+      pubmed_data$all_authors <- 
+        unlist(lapply(Author(records), function(x){
+          paste0(x$ForeName, 
+                 ' ', 
+                 x$LastName, 
+                 collapse = ', ')}))
       
       # Add the year
       pubmed_data$year <- years[year]
