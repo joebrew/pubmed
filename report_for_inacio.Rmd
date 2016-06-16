@@ -1,5 +1,5 @@
 ---
-title: Publicaçoes do CISM
+title: Publicações do CISM
 author: Inacio Mandomando and Joe Brew
 params:
   search_again: false
@@ -78,7 +78,7 @@ results <- left_join(results$results,
 
 # Introdução
 
-Este relatório resume a produção científica do Centro de Investigação em Saude de Manhiça. E produzido de forma automatica, através de pesquisas sistemáticas de PubMed. O termo de pesquisa foi:
+Este relatório resume a produção científica do Centro de Investigação em Saude de Manhiça. E produzido de forma automatica, através de pesquisas sistemáticas das bases de dados NCBI. O termo de pesquisa foi:
 
 **Termo de pesquisa**:
 
@@ -107,9 +107,9 @@ g <-
            fill = 'darkorange',
            alpha = 0.6) +
   theme_cism() +
-  labs(title = 'Publicaçoes por ano') +
+  labs(title = 'Publicações por ano') +
   xlab('Ano') +
-  ylab('Publicaçoes')
+  ylab('Publicações')
 ggplotly(g)
 ```
 
@@ -137,10 +137,10 @@ g <- ggplot(data = by_quarter,
   geom_bar(stat = 'identity',
            fill = 'darkgreen',
            alpha = 0.6) +
-  labs(title = 'Publicaçoes por cuarto',
+  labs(title = 'Publicações por cuarto',
        subtitle = 'Somente nos últimos cinco anos') +
   xlab('Cuarto') +
-  ylab('Publicaçoes') +
+  ylab('Publicações') +
   theme_cism() +
     theme(axis.text.x = element_text(angle = 90)) 
 ggplotly(g)
@@ -192,8 +192,8 @@ g <-
   theme_cism() +
   theme(axis.text.x = element_text(angle = 90)) +
   xlab('') +
-  ylab('Publicaçoes') +
-  labs(title = 'Publicaçoes totais',
+  ylab('Publicações') +
+  labs(title = 'Publicações totais',
        subtitle = 'Primeiro o último autor')
 
 ggplotly(g)
@@ -201,7 +201,7 @@ ggplotly(g)
 
 ## Por ano
 
-No siguiente gráfico soumente contém os autores que têm 5 o mais publicaçoes.
+No siguiente gráfico soumente contém os autores que têm 5 o mais publicações.
 
 ```{r}
 first_author <- 
@@ -243,14 +243,14 @@ g <-
   geom_line() +
   geom_point() +
   theme_cism() +
-  labs(title = 'Publicaçoes por ano e autor',
+  labs(title = 'Publicações por ano e autor',
        subtitle = 'Primeiros e últimos soumente') +
         guides(fill=guide_legend(ncol=10)) +
     theme(legend.position="bottom", 
           legend.direction = 'horizontal')  +
   # scale_color_discrete("") +
   xlab('Ano') +
-  ylab('Publicaçoes') +
+  ylab('Publicações') +
   scale_color_manual(name = '', values = cols)
 
 print(g)
@@ -303,4 +303,109 @@ ggplotly(g)
 
 ## Por anno
 
-Bla bla bla.
+```{r}
+years <- sort(unique(results$year))
+content <- rep(NA, length(years))
+
+for (i in length(years):1){
+  year_table <- results %>%
+    filter(year == years[i]) %>%
+    mutate(url = paste0("http://www.ncbi.nlm.nih.gov/pubmed/?term=", id)) 
+  year_table$number <- 1:nrow(year_table)
+  year_table <- 
+    year_table %>%
+    dplyr::select(number, title, all_authors, url)
+  names(year_table) <- c('Numero', 'Titulo', 'Autor', 'Web')
+  assign(paste0('year_table_',
+                years[i]),
+         year_table)
+  content[length(years) + 1 - i] <-
+    paste0('### ', years[i], '\n\n',
+           '```{r}\n',
+           # 'year_table <- results %>%\n',
+           # 'filter(year == years[i]) %>%\n',
+           # 'mutate(url = paste0("http://www.ncbi.nlm.nih.gov/pubmed/?term=", id)) %>%\n',
+           # 'dplyr::select(title, all_authors, url)\n',
+           'library(knitr)\n',
+           'kable(year_table_',
+           years[i],
+           ')\n',
+           '\n```\n\n')
+}
+
+# Combine the contents
+content <- paste0(content, collapse = '\n\n')
+
+# Write our order / child-calls to a doc
+file_connection <- file('children.Rmd')
+writeLines(paste0('---\noutput: html_document\n---\n\n', 
+                  content), 
+           file_connection)
+close(file_connection)
+```
+
+```{r child='children.Rmd', echo = FALSE}
+# Now, we simply include "children.Rmd" to construct our doc
+```
+
+```{r, results='hide'}
+# Having already called the auto-generated children.Rmd, we can delete it
+file.remove('children.Rmd')
+```
+
+
+
+## Por area
+
+```{r}
+areas <- c('malaria', 'hiv', 'tuberculosis')
+content <- rep(NA, length(areas))
+
+for (i in length(areas):1){
+  x <- results
+  x$area <- x[, areas[i]]
+  area_table <- x %>%
+    filter(area) %>%
+    mutate(url = paste0("http://www.ncbi.nlm.nih.gov/pubmed/?term=", id)) 
+  area_table$number <- 1:nrow(area_table)
+  area_table <- 
+    area_table %>%
+    dplyr::select(number, year, title, all_authors, url) %>%
+    arrange(year)
+  names(area_table) <- c('Numero', 'Titulo', 'Autor', 'Web')
+  assign(paste0('area_table_',
+                areas[i]),
+         area_table)
+  content[length(areas) + 1 - i] <-
+    paste0('### ', areas[i], '\n\n',
+           '```{r}\n',
+           # 'area_table <- results %>%\n',
+           # 'filter(area == areas[i]) %>%\n',
+           # 'mutate(url = paste0("http://www.ncbi.nlm.nih.gov/pubmed/?term=", id)) %>%\n',
+           # 'dplyr::select(title, all_authors, url)\n',
+           'library(knitr)\n',
+           'kable(area_table_',
+           areas[i],
+           ')\n',
+           '\n```\n\n')
+}
+
+# Combine the contents
+content <- paste0(content, collapse = '\n\n')
+
+# Write our order / child-calls to a doc
+file_connection <- file('children.Rmd')
+writeLines(paste0('---\noutput: html_document\n---\n\n', 
+                  content), 
+           file_connection)
+close(file_connection)
+```
+
+```{r child='children.Rmd', echo = FALSE}
+# Now, we simply include "children.Rmd" to construct our doc
+```
+
+```{r, results='hide'}
+# Having already called the auto-generated children.Rmd, we can delete it
+file.remove('children.Rmd')
+```
