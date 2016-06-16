@@ -225,17 +225,17 @@ by_author_year <-
   ungroup 
 
 # Keep only those with 5 or more publications
-by_author_year <-
+by_author_year_small <-
   by_author_year %>%
   group_by(author) %>%
   mutate(total = sum(n)) %>%
   ungroup %>%
   filter(total >= 5)
 
-cols <- colorRampPalette(brewer.pal(9, 'Spectral'))(length(unique(by_author_year$author)))
+cols <- colorRampPalette(brewer.pal(9, 'Spectral'))(length(unique(by_author_year_small$author)))
 # Plot
 g <- 
-  ggplot(data = by_author_year,
+  ggplot(data = by_author_year_small,
          aes(x = year, 
              y = n,
              group = author,
@@ -255,6 +255,62 @@ g <-
 
 print(g)
 ```
+
+## Investigadors principais  
+
+O siguente analise soumente considera estos autores:  
+
+- Pedro Aide
+- Quique Bassat
+- Alberto García-Basteiro
+- Inacio Mandomando
+- Khátia Munguambe
+- Augusto Nhabomba
+- Esperança Sevene
+- Betuel Sigaúque
+
+```{r}
+
+# Keep only those in the selected list
+pis <- 
+  by_author_year %>%
+  filter(author %in% c('Aide',
+                       'Bassat',
+                       'García-Basteiro',
+                       'Mandomando',
+                       'Munguambe',
+                       'Nhabomba',
+                       'Sevene',
+                       'Sigaúque'))
+
+cols <- colorRampPalette(brewer.pal(n = 8, 'Spectral'))(length(unique(pis$author)))
+
+# Expand grid so as to fill in nas
+left <- expand.grid(author = unique(sort(pis$author)),
+                    year = unique(sort(pis$year)))
+pis <- left_join(x = left,
+                 y = pis,
+                 by = c('author', 'year'))
+pis$n[is.na(pis$n)] <- 0
+
+g <- ggplot(data = pis,
+       aes(x = year, y = n,
+           group = author,
+           # color = author,
+           fill = author)) +
+  # geom_line() +
+   geom_bar(stat = 'identity', position = 'dodge') +
+
+  scale_fill_manual(name = '',
+                     values = cols) +
+  theme_cism() +
+  xlab('Ano') +
+  ylab('Artigos') +
+  labs(title = 'Artigos por ano',
+       subtitle = 'Soumente a contar se a pessoa e o primeiro o último autor')
+ggplotly(g)
+```
+
 
 # Por área
 
