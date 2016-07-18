@@ -3,7 +3,7 @@ title: Publicações do CISM
 author: Inacio Mandomando and Joe Brew
 params:
   search_again: false
-  start_year: 1995
+  start_year: 2010
   end_year: 2016
   search_topic: ! '(CISM) OR (Centro de Investigação em Saude de Manhiça) OR (Manhiça Health Research Center) OR (Fundação Manhiça)'
 fig_height: 2.6
@@ -29,6 +29,7 @@ library(Hmisc)
 library(dplyr)
 library(ggplot2)
 library(plotly)
+library(gsheet)
 
 # Basic knitr options
 opts_chunk$set(comment = NA, 
@@ -74,6 +75,12 @@ if(search_again | !file_name %in% dir()){
 results <- left_join(results$results,
                      results$abstracts,
                      by = 'id')
+```
+
+```{r}
+# Read in Sofia's 2016 list
+sofia_url <- 'https://docs.google.com/spreadsheets/d/1-OFA04IOCzaKa4iojiT2vDmUv65IjGLMs-hQrE_PX3s/edit?usp=sharing'
+sofia <- gsheet2tbl(sofia_url)
 ```
 
 # Introdução
@@ -263,6 +270,7 @@ O siguente analise soumente considera estos autores:
 - Pedro Aide
 - Quique Bassat
 - Alberto García-Basteiro
+- Eusebio Macete
 - Inacio Mandomando
 - Khátia Munguambe
 - Augusto Nhabomba
@@ -277,6 +285,7 @@ pis <-
   filter(author %in% c('Aide',
                        'Bassat',
                        'García-Basteiro',
+                       'Macete',
                        'Mandomando',
                        'Munguambe',
                        'Nhabomba',
@@ -309,6 +318,15 @@ g <- ggplot(data = pis,
   labs(title = 'Artigos por ano',
        subtitle = 'Soumente a contar se a pessoa e o primeiro o último autor')
 ggplotly(g)
+```
+
+Uma tabela dos mesmos dados:
+
+```{r}
+x <- pis
+names(x) <- Hmisc::capitalize(names(x))
+x <- x %>% arrange(Author)
+DT::datatable(x)
 ```
 
 
@@ -465,3 +483,23 @@ close(file_connection)
 # Having already called the auto-generated children.Rmd, we can delete it
 file.remove('children.Rmd')
 ```
+
+
+# Comparison of methods for the automatic detection of publications
+
+
+
+```{r}
+joe <- results %>%
+  filter(year >= 2015)
+titles <- sort(unique(c(as.character(joe$title[joe$year == 2016]), sofia$title)))
+titles <- data.frame(title = titles)
+titles$joes_method <- titles$sofias_method <- NA
+titles$joes_method <-
+  ifelse(titles$title %in% joe$title, 'Detected', 'Not detected')
+titles$sofias_method <-
+  ifelse(titles$title %in% sofia$title, 'Detected', 'Not detected')
+names(titles) <- capitalize(gsub('_', ' ', names(titles)))
+DT::datatable(titles)
+```
+

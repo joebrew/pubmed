@@ -136,6 +136,7 @@ pubmed <- function(start_year = 2014,
         
         # Remove unecessary objects
         rm(pubmed_data, abstracts)
+        Sys.sleep(0.3)
       })
       
     }
